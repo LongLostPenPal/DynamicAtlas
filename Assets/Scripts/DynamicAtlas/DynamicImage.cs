@@ -67,12 +67,18 @@ namespace GFrame
             // spriteRect.height *= length;
 
             if (m_DefaultSprite != null)
+            {
                 sprite = Sprite.Create((Texture2D)tex, spriteRect, m_DefaultSprite.pivot, m_DefaultSprite.pixelsPerUnit, 1, SpriteMeshType.Tight, m_DefaultSprite.border);
+                //清空对原sprite的引用，等下次GC释放原始资源
+                m_DefaultSprite = sprite;
+            }
             else
             {
                 sprite = Sprite.Create((Texture2D)tex, spriteRect, new Vector2(spriteRect.width * .5f, spriteRect.height * .5f), 100, 1, SpriteMeshType.Tight, new Vector4(0, 0, 0, 0));
                 m_DefaultSprite = sprite;
             }
+
+            Resources.UnloadUnusedAssets();
         }
 
 
@@ -90,11 +96,13 @@ namespace GFrame
             }
 
             m_SpriteName = name;
-            m_Atlas.GetTeture(name, OnGetImageCallBack);
+            m_Atlas.GetTexture(name, OnGetImageCallBack);
         }
 
         public void RemoveImage(bool clearRange = false)
         {
+            if (sprite == null)
+                return;
             if (m_Atlas == null)//并没有使用图集
                 return;
 
@@ -102,7 +110,7 @@ namespace GFrame
             {
                 m_Atlas.RemoveTexture(m_SpriteName, clearRange);
             }
-
+            sprite = null;
         }
         #endregion
     }

@@ -11,7 +11,29 @@ namespace GFrame
         private List<GetTextureData> m_GetTextureDataList = new List<GetTextureData>();
         private List<SaveTextureData> m_SaveTextureDataList = new List<SaveTextureData>();
         private List<IntegerRectangle> m_IntegerRectangleList = new List<IntegerRectangle>();
+        private Texture2D ClearTexture2D;
+        public Texture2D GetClearTexture2D()
+        {
+            if (null==ClearTexture2D)
+            {
 
+                
+                int width = 512;
+                int height = 512;
+                var tempColor = new Color32[width * height];
+                for (int i = 0; i < tempColor.Length; i++)
+                {
+                    tempColor[i] = Color.white;
+                }
+                ClearTexture2D = new Texture2D(width, height, DynamicAtlasConfig.kTextureFormat, false, true);
+                ClearTexture2D.filterMode = FilterMode.Bilinear;
+                ClearTexture2D.SetPixels32(0, 0, width, height, tempColor);
+                ClearTexture2D.Apply(false);
+                ClearTexture2D.name = string.Format("DynamicAtlas-{0}*{1}-{2}", width, height, "Clear");
+            }
+            return ClearTexture2D;
+        }
+        
         public DynamicAtlas GetDynamicAtlas(DynamicAtlasGroup group)
         {
             DynamicAtlas atlas;
@@ -40,6 +62,7 @@ namespace GFrame
 
         public void ReleaseSaveTextureData(SaveTextureData data)
         {
+            data.referenceCount = 0;
             m_SaveTextureDataList.Add(data);
         }
 

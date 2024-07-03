@@ -16,6 +16,7 @@ namespace GFrame
         private Dictionary<string, SaveTextureData> m_UsingTexture = new Dictionary<string, SaveTextureData>();
 
         private Color32[] m_TempColor;
+        private Rect ZeroRect = new Rect(0, 0, 0, 0);
         public DynamicAtlas(DynamicAtlasGroup group)
         {
             int length = (int)group;
@@ -53,14 +54,14 @@ namespace GFrame
             if (texture == null)
             {
                 Debug.Log("Texture is Null");
-                callBack(null, new Rect(0, 0, 0, 0));
+                callBack(null, ZeroRect);
                 return;
             }
 
             if (texture.width > m_Width || texture.height > m_Height)
             {
                 Debug.Log("Texture is too big");
-                callBack(null, new Rect(0, 0, 0, 0));
+                callBack(null, ZeroRect);
                 return;
             }
 
@@ -85,7 +86,7 @@ namespace GFrame
             OnRenderTexture(data.name, (Texture2D)texture);
         }
 
-        public void GetTeture(string name, OnCallBackTexRect callback)
+        public void GetTexture(string name, OnCallBackTexRect callback)
         {
             if (m_UsingTexture.ContainsKey(name))
             {
@@ -105,7 +106,7 @@ namespace GFrame
                 if (texture == null)
                 {
                     Debug.LogError("Failed To load Texture:" + name);
-                    callback(null, new Rect(0, 0, 0, 0));
+                    callback(null, ZeroRect);
                     return;
                 }
 
@@ -142,6 +143,10 @@ namespace GFrame
             }
         }
 
+        public List<DynamicAtlasPage> GetPageList()
+        {
+            return m_PageList;
+        }
         #endregion
 
         private void OnRenderTexture(string name, Texture2D texture2D)
@@ -155,7 +160,7 @@ namespace GFrame
                     {
                         if (task.callback != null)
                         {
-                            task.callback(null, new Rect(0, 0, 0, 0));
+                            task.callback(null, ZeroRect);
                         }
                     }
 
@@ -382,12 +387,14 @@ namespace GFrame
 
         public void AddTexture(int posX, int posY, Texture2D srcTex)
         {
+            Debug.Log(string.Format("Add Texture {4} pos = ({0},{1}), size=({2},{3})",posX,posY,srcTex.width, srcTex.height, srcTex.name));
             //可以把一张贴图画到另一张贴图上
             Graphics.CopyTexture(srcTex, 0, 0, 0, 0, srcTex.width, srcTex.height, m_Texture, 0, 0, posX, posY);
         }
 
         public void RemoveTexture(Rect rect)
         {
+            /*
             int width = (int)rect.width;
             int height = (int)rect.height;
             Color32[] colors = new Color32[width * height];
@@ -395,9 +402,20 @@ namespace GFrame
             {
                 colors[i] = Color.clear;
             }
-
             m_Texture.SetPixels32((int)rect.x, (int)rect.y, width, height, colors);
             m_Texture.Apply();
+            */
+            
+            int width = (int)rect.width;
+            int height = (int)rect.height;
+            Debug.Log(string.Format("Remove Texture pos = ({0},{1}), size=({2},{3})",rect.x,rect.y,width, height));
+            //在GPU端操作，空间换时间
+            var clearTexture = DynamicAtlasMgr.S.GetClearTexture2D();
+            if (width>clearTexture.width || height>clearTexture.height)
+            {
+                Debug.Log("大于擦除模板!!");
+            }
+            Graphics.CopyTexture(clearTexture, 0, 0, 0, 0, width, height, m_Texture, 0, 0, (int)rect.x, (int)rect.y);
         }
 
 
